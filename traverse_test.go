@@ -10,7 +10,7 @@ import "fmt"
 import "strconv"
 
 func TestTraverse(t *testing.T) {
-	TraverseFile("./tmp", "igno*", "./traverse")
+	TraverseFile("./tmp", "igno*", "./traverse_result")
 	file, err := os.Open("./traverse")
 	if err != nil {
 		t.Error(err)
