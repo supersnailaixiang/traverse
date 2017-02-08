@@ -11,7 +11,7 @@ import "strconv"
 
 func TestTraverse(t *testing.T) {
 	TraverseFile("./tmp", "igno*", "./traverse_result")
-	file, err := os.Open("./traverse")
+	file, err := os.Open("./traverse_result")
 	if err != nil {
 		t.Error(err)
 	}
