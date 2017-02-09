@@ -3,13 +3,18 @@ package main
 import (
 	"bufio"
 	"crypto/sha1"
+	"math"
 
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 )
+
+// 对于大文件的处理凡是大于5M 都按块读取。
+const fileLimit = 1024 * 5
 
 func TraverseFile(rootDir, ignoreDir, outFile string) {
 
@@ -39,9 +44,28 @@ func TraverseFile(rootDir, ignoreDir, outFile string) {
 		if err != nil {
 			panic(err)
 		}
-		dat, _ := ioutil.ReadFile(path)
+		fileSize := fileInfo.Size()
+
 		h := sha1.New()
-		h.Write(dat)
+		if fileSize < fileLimit {
+
+			dat, _ := ioutil.ReadFile(path)
+			h.Write(dat)
+		} else { // 超过5M 分块读取
+			blockNum := uint64(math.Ceil(float64(fileSize) / float64(fileLimit)))
+			readFile, err := os.Open(path)
+			if err != nil {
+				panic(err)
+			}
+			for i := uint64(0); i < blockNum; i++ {
+				blockSize := int(math.Min(fileLimit, float64(fileSize-int64(i*fileLimit))))
+				dat := make([]byte, blockSize)
+				readFile.Read(dat)
+				io.WriteString(h, string(dat))
+			}
+			readFile.Close()
+		}
+
 		bs := h.Sum(nil)
 
 		_, _ = fmt.Fprintf(w, "%s,%x,%d\n", path, bs, fileInfo.Size())
